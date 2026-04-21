@@ -47,12 +47,16 @@ EOF
 # Apply sysctl params without reboot
 sudo sysctl --system
 
+echo "🚀 Adding user to sudo group..."
+sudo usermod -aG sudo $USER
+
 echo "🚀 Initializing cluster..."
 sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 
 echo "🚀 Configuring kubectl..."
+
 mkdir -p $HOME/.kube
-sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 echo "🚀 Installing Flannel network..."
