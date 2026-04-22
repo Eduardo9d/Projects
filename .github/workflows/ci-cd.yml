@@ -1,0 +1,44 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  python-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - name: Check Python syntax
+      run: python -m py_compile Python/Network_test.py
+    - name: Run network test (optional, may fail in CI)
+      run: python Python/Network_test.py 8.8.8.8 network_test_results.csv
+      continue-on-error: true
+
+  terraform-validate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+    - name: Terraform Init
+      run: |
+        cd Terraform
+        terraform init
+    - name: Terraform Validate
+      run: |
+        cd Terraform
+        terraform validate
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Docker image
+      run: docker build -t apache-demo .

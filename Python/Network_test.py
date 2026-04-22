@@ -50,8 +50,12 @@ def write_to_csv(ip, ping_status, port_results, dns_result, csv_file):
         writer.writerow([ip, ping_status, ports_str, dns_result])
 
 if __name__ == "__main__":
+    import sys
     try:
-        target_ip = input("Enter IP address to test: ")
+        if len(sys.argv) > 1:
+            target_ip = sys.argv[1]
+        else:
+            target_ip = input("Enter IP address to test: ")
         ping_status, ping_output = ping_host(target_ip)
         port_results = scan_ports(target_ip)
         dns_result = resolve_dns(target_ip)
@@ -65,7 +69,7 @@ if __name__ == "__main__":
         print(f"DNS: {dns_result}")
 
         # Write results to CSV
-        csv_file = "network_test_results.csv"
+        csv_file = sys.argv[2] if len(sys.argv) > 2 else "network_test_results.csv"
         write_to_csv(target_ip, ping_status, port_results, dns_result, csv_file)
         print(f"Results saved to {csv_file}")
     except KeyboardInterrupt:
