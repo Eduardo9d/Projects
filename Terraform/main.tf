@@ -117,69 +117,36 @@ resource "aws_instance" "ec2" {
   vpc_security_group_ids = [aws_security_group.sg.id]
 
   user_data = <<-EOF
-              set -e
+#! /bin/bash
+set -e
+echo "🚀 Installing Minikube..."
 
-              echo "🚀 Updating system..."
-              sudo apt update && sudo apt upgrade -y
+curl -LO \
+https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
 
-              echo "🚀 Disabling swap..."
-              sudo swapoff -a
-              sudo sed -i '/ swap / s/^/#/' /etc/fstab
+sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
 
-              echo "🚀 Installing dependencies..."
-              sudo apt install -y apt-transport-https ca-certificates curl gpg
+sudo usermod -aG docker $USER && newgrp docker 
 
-              echo "🚀 Installing containerd..."
-              sudo apt install -y containerd
+minikube start --driver=virtualbox
 
-              sudo mkdir -p /etc/containerd
-              containerd config default | sudo tee /etc/containerd/config.toml
-              sudo systemctl restart containerd
-              sudo systemctl enable containerd
+minikube status
 
-              echo "🚀 Adding Kubernetes repo..."
-              sudo mkdir -p /etc/apt/keyrings
+echo "🚀 Minikube installation complete!"
+# minikube stop
 
-              curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key \
-              | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes.gpg
+# minikube delete
 
-              echo "deb [signed-by=/etc/apt/keyrings/kubernetes.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" \
-              | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt install bash-completion
 
-              echo "🚀 Installing Kubernetes tools..."
-              sudo apt update
-              sudo apt install -y kubelet kubeadm kubectl
-              sudo apt-mark hold kubelet kubeadm kubectl
-              # Load necessary kernel modules and set sysctl params for Kubernetes networking
-              echo "🚀 Loading kernel modules..."
-              sudo modprobe br_netfilter
-              sudo modprobe overlay
-              # Enable required sysctl params, persist across reboots
-              echo "🚀 Configuring sysctl for Kubernetes..."
-              cat <<'INNER_EOF' | sudo tee /etc/sysctl.d/kubernetes.conf
-              net.bridge.bridge-nf-call-ip6tables = 1
-              net.bridge.bridge-nf-call-iptables = 1
-              net.ipv4.ip_forward = 1
-              INNER_EOF
-              # Apply sysctl params without reboot
-              sudo sysctl --system
+source /etc/bash_completion
 
-              echo "🚀 Initializing cluster..."
-              sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+source <(minikube completion bash)
 
-              echo "🚀 Configuring kubectl..."
-              mkdir -p $HOME/.kube
-              sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
-              sudo chown $(id -u):$(id -g) $HOME/.kube/config
+# If needed, also run the following command:
 
-              echo "🚀 Installing Flannel network..."
-              kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+minikube completion bash | sudo tee /etc/bash_completion.d/minikube
 
-              echo "🚀 Allow scheduling on master (single node setup)"
-              kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
-
-              echo "🎉 Kubernetes cluster is ready!"
-              kubectl get nodes
               EOF
 
   tags = {
