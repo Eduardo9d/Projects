@@ -17,3 +17,22 @@ variable "bucket_name" {
 variable "key_name" {
   default = "Key-k8s"
 }
+
+variable "db" {
+  type = object({
+    name     = string
+    username = string
+    password = string
+  })
+  default = {
+    name     = "mydb"
+    username = "admin"
+    password = "password"
+  }
+}
+
+variable "allowed_ips" {
+  description = "Additional IP ranges to allow access (e.g., office, VPN)"
+  type        = list(string)
+  default     = []
+}

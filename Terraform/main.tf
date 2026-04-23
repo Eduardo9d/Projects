@@ -12,6 +12,13 @@ provider "aws" {
 }
 
 # -------------------------
+# Get current public IP for security group restrictions
+# -------------------------
+data "http" "my_ip" {
+  url = "https://ipv4.icanhazip.com"
+}
+
+# -------------------------
 # VPC
 # -------------------------
 resource "aws_vpc" "main" {
@@ -71,22 +78,22 @@ resource "aws_route_table_association" "rta" {
 # -------------------------
 resource "aws_security_group" "sg" {
   name        = "terraform-sg"
-  description = "Allow SSH"
+  description = "Allow SSH and Kubernetes API from current IP"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "SSH from specific IPs"
+    description = "SSH from current IP"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # TODO: Restrict to your IP range for security
+    cidr_blocks = concat(["${chomp(data.http.my_ip.response_body)}/32"], var.allowed_ips)
   }
   ingress {
-    description = "Kubernetes API Server"
+    description = "Kubernetes API Server from current IP"
     from_port   = 6443
     to_port     = 6443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # TODO: Restrict to your IP range for security
+    cidr_blocks = concat(["${chomp(data.http.my_ip.response_body)}/32"], var.allowed_ips)
   }
 
   ingress {
@@ -153,7 +160,89 @@ minikube completion bash | sudo tee /etc/bash_completion.d/minikube
     Name = "Kubernetes-Master"
   }
 }
+# -------------------------
+# Private Subnets for RDS (Multi-AZ)
+# -------------------------
+resource "aws_subnet" "private_a" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.2.0/25"
+  availability_zone = "${var.aws_region}a"
 
+  tags = {
+    Name = "private-subnet-a"
+  }
+}
+
+resource "aws_subnet" "private_b" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.2.128/25"
+  availability_zone = "${var.aws_region}b"
+
+  tags = {
+    Name = "private-subnet-b"
+  }
+}
+
+# -------------------------
+# DB Subnet Group
+# -------------------------
+resource "aws_db_subnet_group" "db_subnet_group" {
+  name       = "main-db-subnet-group"
+  subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+
+  tags = {
+    Name = "Main DB subnet group"
+  }
+}
+
+# -------------------------
+# Database Security Group
+# -------------------------
+resource "aws_security_group" "db_sg" {
+  name        = "db-sg"
+  description = "Allow MySQL inbound traffic"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "MySQL from VPC"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.sg.id]  # Allow from EC2 SG only
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "db-sg"
+  }
+}
+
+# -------------------------
+# Database (RDS)
+# -------------------------
+resource "aws_db_instance" "db" {
+  allocated_storage      = 20
+  engine                 = "mysql"
+  engine_version         = "8.0"
+  instance_class         = "db.t3.micro"
+  db_name                = var.db.name
+  username               = var.db.username
+  password               = var.db.password
+  parameter_group_name   = "default.mysql8.0"
+  db_subnet_group_name   = aws_db_subnet_group.db_subnet_group.name
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  skip_final_snapshot    = true
+
+  tags = {
+    Name = "terraform-db"
+  }
+}
 # -------------------------
 # S3 Bucket
 # -------------------------
