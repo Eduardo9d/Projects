@@ -62,4 +62,3 @@ The `Python/Network_test.py` script is a small troubleshooting utility for netwo
 3. Use the Bash scripts to install tools or configure nodes.
 4. Deploy Kubernetes workloads from the `Kubernetes/` folder.
 5. Use `Python/Network_test.py` to verify network connectivity.
-
