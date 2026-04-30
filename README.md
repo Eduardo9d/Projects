@@ -2,6 +2,22 @@
 
 This repository contains infrastructure automation, installation scripts, Kubernetes manifests, and a small network troubleshooting utility for an AWS-based environment.
 
+
+## Diagram 
+
+flowchart TD
+    A[Start] --> B[Configure AWS credentials]
+    B --> C[Run Terraform]
+    C --> D{Terraform successful?}
+    D -->|Yes| E[Install Kubernetes tools]
+    E --> F[Deploy Kubernetes workloads]
+    F --> G[Run network validation]
+    G --> H[Ready]
+    D -->|No| I[Troubleshoot]
+    I --> J[Fix issue]
+    J --> C
+
+
 ## Terraform
 
 The `Terraform/` folder defines AWS infrastructure resources, including:
