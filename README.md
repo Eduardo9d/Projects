@@ -2,9 +2,9 @@
 
 This repository contains infrastructure automation, installation scripts, Kubernetes manifests, and a small network troubleshooting utility for an AWS-based environment.
 
+## Diagram
 
-## Diagram 
-
+```mermaid
 flowchart TD
     A[Start] --> B[Configure AWS credentials]
     B --> C[Run Terraform]
@@ -16,7 +16,7 @@ flowchart TD
     D -->|No| I[Troubleshoot]
     I --> J[Fix issue]
     J --> C
-
+```
 
 ## Terraform
 
