@@ -1,12 +1,12 @@
 FROM ubuntu:22.04
 
-LABEL maintainer="eduardo9d@gmail.com"
-
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends apache2 \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y apache2 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/www/html/*
 
-RUN echo "Melhor Site" > /var/www/html/index.html
+COPY HTML5-Template/ /var/www/html/
 
 EXPOSE 80
 

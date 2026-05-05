@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: File Check
 
 on:
   push:
@@ -36,6 +36,7 @@ jobs:
         cd Terraform
         terraform validate
 
+# Docker Build (optional, can be used for testing Dockerfile)
   docker-build:
     runs-on: ubuntu-latest
     steps:

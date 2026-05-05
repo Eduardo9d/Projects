@@ -89,9 +89,9 @@ resource "aws_security_group" "sg" {
     cidr_blocks = concat(["${chomp(data.http.my_ip.response_body)}/32"], var.allowed_ips)
   }
   ingress {
-    description = "Kubernetes API Server from current IP"
-    from_port   = 6443
-    to_port     = 6443
+    description = "Apache API Server from current IP"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = concat(["${chomp(data.http.my_ip.response_body)}/32"], var.allowed_ips)
   }
@@ -112,9 +112,9 @@ resource "aws_security_group" "sg" {
 }
 
 # -------------------------
-# EC2 Instance
+# EC2 Instance #1
 # -------------------------
-resource "aws_instance" "ec2" {
+resource "aws_instance" "ec2-1" {
   ami           = var.ec2_ami
   instance_type = var.instance_type
 
@@ -125,39 +125,40 @@ resource "aws_instance" "ec2" {
 
   user_data = <<-EOF
 #! /bin/bash
-set -e
-echo "🚀 Installing Minikube..."
-
-curl -LO \
-https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
-
-sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
-
-sudo usermod -aG docker $USER && newgrp docker 
-
-minikube start --driver=virtualbox
-
-minikube status
-
-echo "🚀 Minikube installation complete!"
-# minikube stop
-
-# minikube delete
-
-sudo apt install bash-completion
-
-source /etc/bash_completion
-
-source <(minikube completion bash)
-
-# If needed, also run the following command:
-
-minikube completion bash | sudo tee /etc/bash_completion.d/minikube
-
+apt-get update -y
+apt-get install httpd -y
+systemctl start httpd
+systemctl enable httpd
+echo "Hello from Terraform EC2 instance1!" > /var/www/html/index.html
               EOF
 
   tags = {
-    Name = "Kubernetes-Master"
+    Name = "Apache1-EC2"
+  }
+}
+# -------------------------
+# EC2 Instance #2
+# -------------------------
+resource "aws_instance" "ec2-2" {
+  ami           = var.ec2_ami
+  instance_type = var.instance_type
+
+  key_name = var.key_name   # 🔥 MUST exist
+
+  subnet_id     = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.sg.id]
+
+  user_data = <<-EOF
+#! /bin/bash
+apt-get update -y
+apt-get install httpd -y
+systemctl start httpd
+systemctl enable httpd
+echo "Hello from Terraform EC2 instance2!" > /var/www/html/index.html
+              EOF
+
+  tags = {
+    Name = "Apache2-EC2"
   }
 }
 # -------------------------

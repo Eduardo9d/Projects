@@ -1,0 +1,17 @@
+name: Docker install
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docker-install:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Docker
+      run: |
+        chmod +x Bash/install_docker.sh
+        sudo bash Bash/install_docker.sh
