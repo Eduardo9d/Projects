@@ -21,6 +21,5 @@ jobs:
         terraform plan
     # - name: Terraform Apply
     #   run: |
-    #     cd Terraform
     #     cd terraform
     #     terraform apply -auto-approve
