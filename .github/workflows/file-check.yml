@@ -42,4 +42,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build Docker image
-      run: docker build -t apache docker/apache
+      run: docker build -t apache -f docker/apache/Dockerfile docker/apache
