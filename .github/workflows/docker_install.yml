@@ -13,5 +13,5 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Docker
       run: |
-        chmod +x Bash/install_docker.sh
-        sudo bash Bash/install_docker.sh
+        chmod +x bash/install_docker.sh
+        sudo bash bash/install_docker.sh
