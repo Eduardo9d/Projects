@@ -16,9 +16,9 @@ jobs:
       with:
         python-version: '3.x'
     - name: Check Python syntax
-      run: python -m py_compile Python/Network_test.py
+      run: python -m py_compile python/Network_test.py
     - name: Run network test (optional, may fail in CI)
-      run: python Python/Network_test.py 8.8.8.8 network_test_results.csv
+      run: python python/Network_test.py 8.8.8.8 network_test_results.csv
       continue-on-error: true
 
   terraform-validate:
@@ -42,4 +42,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build Docker image
-      run: docker build -t apache -f docker/apache/Dockerfile docker/apache
+      run: docker build -t apache -f docker/apache/Dockerfile .
