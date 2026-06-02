@@ -29,11 +29,11 @@ jobs:
       uses: hashicorp/setup-terraform@v3
     - name: Terraform Init
       run: |
-        cd Terraform
+        cd terraform
         terraform init
     - name: Terraform Validate
       run: |
-        cd Terraform
+        cd terraform
         terraform validate
 
 # Docker Build (optional, can be used for testing Dockerfile)
@@ -42,4 +42,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build Docker image
-      run: docker build -t apache Docker/Apache/Dockerfile .
+      run: docker build -t apache docker/apache
